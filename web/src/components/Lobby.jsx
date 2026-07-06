@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { api } from '../api.js';
+import { api, href } from '../api.js';
 
 export default function Lobby({ user, onEnterRoom, onLogout }) {
   const [leagues, setLeagues] = useState([]);
@@ -92,6 +92,11 @@ export default function Lobby({ user, onEnterRoom, onLogout }) {
           </ul>
         </section>
       </div>
+
+      <footer className="lobby-foot muted small">
+        <a href={href('/review')}>Review &amp; suggest food changes →</a>
+        <a href={href('/admin')}>Admin</a>
+      </footer>
     </div>
   );
 }

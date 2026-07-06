@@ -156,12 +156,11 @@ export default function Draft({ code, me, onLeave }) {
   }
 
   // ---- active/paused/break/done view ----
-  const idIndex = (id) => parseInt(String(id).split('-')[1], 10) || 0;
   const poolItems = (Array.isArray(state.board) ? state.board : [])
     .filter((it) => showDrafted || !it.taken)
     .filter((it) => typeFilter === 'all' || it.type === typeFilter)
     .filter((it) => it.name.toLowerCase().includes(search.toLowerCase()))
-    .sort((a, b) => a.tier - b.tier || idIndex(a.id) - idIndex(b.id)); // best tier → worst tier
+    .sort((a, b) => a.tier - b.tier || (a.ord ?? 0) - (b.ord ?? 0)); // best tier → worst tier
 
   return (
     <div className="room">

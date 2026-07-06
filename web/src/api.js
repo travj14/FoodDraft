@@ -43,4 +43,11 @@ export const api = {
   createLeague: (name, settings) => req('/leagues', 'POST', { name, settings }),
   createMock: (settings) => req('/mock', 'POST', { settings }),
   checkRoom: (code) => req('/rooms/' + code, 'GET'),
+  getFoods: () => req('/foods', 'GET'),
+  submitProposals: (ops) => req('/foods/proposals', 'POST', { ops }),
+  approve: (ids) => req('/foods/approve', 'POST', { ids }),
+  reject: (ids) => req('/foods/reject', 'POST', { ids }),
 };
+
+// Build an in-app URL that respects the /fooddraft subpath when present.
+export const href = (p) => (BASE || '') + p;

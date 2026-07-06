@@ -1,7 +1,8 @@
 // Draft room state machine: snake order, per-pick timer, sleep-break windows,
 // auto-pick from queue, and bots that fill empty seats.
 import crypto from 'crypto';
-import { allItems, TIER_NAMES } from './foods.js';
+import { TIER_NAMES } from './foods.js';
+import { store } from './store.js';
 
 const DEFAULT_SETTINGS = {
   teams: 10,
@@ -193,8 +194,9 @@ export class Room {
       this.order.push(...seats);
     }
 
-    // One flat pool of foods, sampled from ALL tiers. Available on every pick.
-    const all = allItems();
+    // One flat pool of foods, sampled from the LIVE (approved) food list. This is
+    // snapshotted here, so later edits/approvals never affect an in-progress draft.
+    const all = store.getFoods();
     const target = this.settings.poolSize > 0 ? this.settings.poolSize : teams * (rounds + 1);
     const n = Math.min(all.length, Math.max(target, teams * rounds)); // enough to finish
     this.board = shuffle(all).slice(0, n).map((it) => ({ ...it, taken: false, takenBySeat: null }));
@@ -328,8 +330,7 @@ export class Room {
     // 2) otherwise pick from the top of the board (best tier first), usually the
     //    very top item with a little randomness among the next few.
     if (!itemId && avail.length) {
-      const idIndex = (id) => parseInt(String(id).split('-')[1], 10) || 0;
-      const sorted = avail.slice().sort((a, b) => a.tier - b.tier || idIndex(a.id) - idIndex(b.id));
+      const sorted = avail.slice().sort((a, b) => a.tier - b.tier || (a.ord ?? 0) - (b.ord ?? 0));
       const r = Math.random();
       const pickIdx = r < 0.7 ? 0 : r < 0.9 ? 1 : 2; // 70% top, 20% 2nd, 10% 3rd
       itemId = sorted[Math.min(pickIdx, sorted.length - 1)].id;

@@ -10,11 +10,16 @@ import crypto from 'crypto';
 import { Server } from 'socket.io';
 import { store } from './store.js';
 import { Room } from './draft.js';
+import { TIER_NAMES } from './foods.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = process.env.PORT || 4100;
 const JWT_SECRET = process.env.JWT_SECRET || 'fooddraft-dev-secret-change-me';
 const WEB_DIST = path.join(__dirname, '..', '..', 'web', 'dist');
+
+// Seed the admin account (username ADMIN / password 1234) if it doesn't exist.
+if (!store.getUserByName('ADMIN')) store.createUser('ADMIN', bcrypt.hashSync('1234', 10));
+const isAdmin = (user) => user && user.username === 'ADMIN';
 
 const app = express();
 app.use(cors());
@@ -109,7 +114,69 @@ app.get('/api/me', requireAuth, (req, res) => {
   const leagues = store.leaguesForUser(req.user.id).map((l) => ({
     code: l.code, name: l.name, ownerId: l.ownerId,
   }));
-  res.json({ user: { id: req.user.id, username: req.user.username }, leagues });
+  res.json({ user: { id: req.user.id, username: req.user.username, isAdmin: isAdmin(req.user) }, leagues });
+});
+
+// ---- editable food list (review + admin) -----------------------------------
+function requireAdmin(req, res, next) {
+  if (!isAdmin(req.user)) return res.status(403).json({ error: 'Admins only.' });
+  next();
+}
+
+function sanitizeItem(it) {
+  return {
+    name: String(it?.name || '').slice(0, 120).trim(),
+    qty: String(it?.qty || '').slice(0, 60).trim(),
+    type: it?.type === 'volume' ? 'volume' : 'content',
+    tier: Math.max(0, Math.min(TIER_NAMES.length - 1, it?.tier | 0)),
+  };
+}
+
+function applyOp(op) {
+  if (op.kind === 'add') store.addFood(op.item);
+  else if (op.kind === 'edit') store.editFood(op.targetId, op.item);
+  else if (op.kind === 'delete') store.deleteFood(op.targetId);
+}
+
+// Anyone signed in can view the list + pending proposals.
+app.get('/api/foods', requireAuth, (req, res) => {
+  res.json({ foods: store.getFoods(), proposals: store.getProposals(), tierNames: TIER_NAMES });
+});
+
+// Anyone signed in can submit proposed changes (replaces the pending set).
+app.post('/api/foods/proposals', requireAuth, (req, res) => {
+  const raw = Array.isArray(req.body?.ops) ? req.body.ops.slice(0, 2000) : [];
+  const ops = raw
+    .filter((o) => ['add', 'edit', 'delete'].includes(o.kind))
+    .map((o) => ({
+      id: crypto.randomUUID(),
+      kind: o.kind,
+      targetId: o.targetId || null,
+      item: o.kind === 'delete' ? null : sanitizeItem(o.item),
+      by: req.user.id,
+      byName: req.user.username,
+      at: Date.now(),
+    }));
+  store.setProposals(ops);
+  res.json({ ok: true, proposals: store.getProposals() });
+});
+
+// Admin-only: approve (apply + clear) or reject (clear) proposals.
+app.post('/api/foods/approve', requireAuth, requireAdmin, (req, res) => {
+  const all = store.getProposals();
+  const ids = req.body?.ids === 'all' ? all.map((p) => p.id) : (Array.isArray(req.body?.ids) ? req.body.ids : []);
+  const set = new Set(ids);
+  for (const op of all) if (set.has(op.id)) applyOp(op);
+  store.setProposals(store.getProposals().filter((p) => !set.has(p.id)));
+  res.json({ ok: true, foods: store.getFoods(), proposals: store.getProposals() });
+});
+
+app.post('/api/foods/reject', requireAuth, requireAdmin, (req, res) => {
+  const all = store.getProposals();
+  const ids = req.body?.ids === 'all' ? all.map((p) => p.id) : (Array.isArray(req.body?.ids) ? req.body.ids : []);
+  const set = new Set(ids);
+  store.setProposals(all.filter((p) => !set.has(p.id)));
+  res.json({ ok: true, proposals: store.getProposals() });
 });
 
 // Create a persistent league.

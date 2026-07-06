@@ -175,6 +175,59 @@ input { font-family: inherit; }
 .kv { list-style: none; padding: 0; margin: 0; }
 .kv li { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--line); }
 
+/* ---------- review / admin pages ---------- */
+.page { max-width: 1080px; margin: 0 auto; padding: 20px; }
+.page-top { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; border-bottom: 1px solid var(--line); padding-bottom: 12px; }
+.page-title { display: flex; align-items: baseline; gap: 12px; }
+.page-title h1 { margin: 0; font-size: 20px; }
+.back { color: var(--muted); text-decoration: none; font-weight: 600; }
+.back:hover { color: var(--text); }
+.page-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.page-actions .who { color: var(--muted); font-size: 12px; }
+.page-actions .who a, .prop a, .pad a, .ok-banner a { color: var(--accent2); }
+.legend { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: 12px; }
+.swatch { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+.swatch.pending { background: #d9b13b; }
+.pad { padding: 20px; }
+.ok-banner { background: rgba(46,204,113,.12); border: 1px solid rgba(46,204,113,.4); color: #7fe0a6; padding: 10px 14px; border-radius: 8px; margin-bottom: 12px; }
+.pending-note { background: rgba(217,177,59,.12); border: 1px solid rgba(217,177,59,.4); color: #e6c766; padding: 10px 14px; border-radius: 8px; margin-bottom: 12px; }
+
+.tbl-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; }
+.tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+.tbl th { text-align: left; padding: 8px 10px; color: var(--muted); font-size: 11px; letter-spacing: .5px; border-bottom: 1px solid var(--line); position: sticky; top: 0; background: var(--panel); }
+.tbl td { padding: 5px 10px; border-bottom: 1px solid rgba(38,48,74,.5); vertical-align: middle; }
+.tbl tr.pending td { background: rgba(217,177,59,.14); }
+.tbl tr.del td { opacity: .7; }
+.tbl tr.del .cell-inp { text-decoration: line-through; }
+.c-num { width: 36px; text-align: right; }
+.c-del { width: 44px; text-align: center; }
+.cell-inp { width: 100%; background: var(--bg2); border: 1px solid var(--line); color: var(--text); padding: 6px 8px; border-radius: 6px; }
+.cell-inp.qty { max-width: 140px; }
+.cell-inp:disabled { opacity: .6; }
+.cell-sel { background: var(--bg2); border: 1px solid var(--line); color: var(--text); padding: 6px 8px; border-radius: 6px; }
+.cell-sel.untiered { border-color: var(--warn); color: var(--warn); }
+
+.prop-list { display: flex; flex-direction: column; gap: 8px; }
+.prop { display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 12px; padding: 12px 14px; background: var(--panel); border: 1px solid var(--line); border-left: 3px solid var(--line); border-radius: 10px; }
+.prop.add { border-left-color: var(--green); }
+.prop.edit { border-left-color: var(--warn); }
+.prop.delete { border-left-color: var(--danger); }
+.prop-actions { display: flex; gap: 6px; }
+.tag { font-size: 10px; font-weight: 800; padding: 2px 6px; border-radius: 4px; margin-right: 6px; letter-spacing: .5px; }
+.tag.add { background: rgba(46,204,113,.2); color: #7fe0a6; }
+.tag.edit { background: rgba(224,169,74,.2); color: var(--warn); }
+.tag.del { background: rgba(224,90,90,.2); color: #ec9; }
+.diffs { margin-top: 6px; display: flex; flex-direction: column; gap: 2px; }
+.diff { font-size: 12px; }
+.diff .dk { color: var(--muted); display: inline-block; width: 42px; }
+.diff .old { color: #d98a8a; text-decoration: line-through; }
+.diff .new { color: #7fe0a6; }
+
+.lobby-foot { display: flex; gap: 16px; justify-content: center; margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--line); }
+.lobby-foot a { color: var(--muted); }
+.lobby-foot a:hover { color: var(--accent2); }
+.btn.full { display: block; }
+
 /* modal */
 .modal-back { position: fixed; inset: 0; background: rgba(4,6,12,.6); display: grid; place-items: center; z-index: 50; }
 .modal { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 24px; width: 460px; max-width: 92vw; }

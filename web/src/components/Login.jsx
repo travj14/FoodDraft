@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { api, setAuth } from '../api.js';
 
-export default function Login({ onAuthed }) {
+export default function Login({ onAuthed, subtitle }) {
   const [mode, setMode] = useState('login');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -28,7 +28,7 @@ export default function Login({ onAuthed }) {
     <div className="auth-wrap">
       <div className="auth-card">
         <div className="brand"><span className="brand-emoji">🍔🤢</span> FoodDraft</div>
-        <p className="auth-tag">Draft your poison. Loser eats the lineup.</p>
+        <p className="auth-tag">{subtitle || 'Draft your poison. Loser eats the lineup.'}</p>
         <div className="tab-row">
           <button className={mode === 'login' ? 'tab on' : 'tab'} onClick={() => setMode('login')}>Log in</button>
           <button className={mode === 'register' ? 'tab on' : 'tab'} onClick={() => setMode('register')}>Sign up</button>

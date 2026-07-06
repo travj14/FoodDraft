@@ -43,6 +43,11 @@ const TIERS = [
       ['Egg salad sandwich', '2', 'c'], ['Jalapeño poppers', '6', 'c'],
       ['Cold canned baked beans', '4 oz', 'c'], ['Hard-boiled eggs', '4', 'c'],
       ['Sauerkraut', '3 oz', 'c'], ['Whole raw onion', '1', 'c'],
+      ['Double bacon cheeseburger', '2', 'v'], ['Deep-dish pizza', '4 slices', 'v'],
+      ['Gyro platter', '1', 'v'], ['Corned beef hash', '1 lb', 'v'],
+      ['Fried mac-and-cheese balls', '10', 'v'], ['Loaded potato skins', '12', 'v'],
+      ['Deep-fried Oreos', '12', 'v'], ['Deep-fried Twinkie', '3', 'v'],
+      ['Fried bologna sandwich', '3', 'v'],
     ],
   },
   {
@@ -147,8 +152,25 @@ const TIERS = [
   },
 ];
 
-// Flatten to items with stable ids: `${tierIndex}-${itemIndex}`
+import crypto from 'crypto';
+
+// The tiers above are the SEED. The live, editable food list lives in the store
+// (data.json) and is seeded from this once. `ord` preserves curated within-tier order.
 export const TIER_NAMES = TIERS.map((t) => t.name);
+
+export function buildSeedFoods() {
+  const out = [];
+  let ord = 0;
+  TIERS.forEach((tier, ti) => {
+    tier.items.forEach(([name, qty, type]) => {
+      out.push({
+        id: crypto.randomUUID(), ord: ord++, name, qty,
+        type: type === 'v' ? 'volume' : 'content', tier: ti,
+      });
+    });
+  });
+  return out;
+}
 
 export function tierItems(tierIndex) {
   const tier = TIERS[tierIndex];

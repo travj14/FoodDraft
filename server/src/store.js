@@ -3,20 +3,26 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import crypto from 'crypto';
+import { buildSeedFoods } from './foods.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DATA_FILE = path.join(__dirname, '..', 'data.json');
 
-let data = { users: [], leagues: [] };
+let data = { users: [], leagues: [], foods: [], proposals: [] };
 try {
   if (fs.existsSync(DATA_FILE)) data = JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
 } catch (e) {
   console.error('Failed to read data.json, starting fresh:', e.message);
 }
 
+// Seed the editable food list from the hardcoded tiers on first run.
+if (!Array.isArray(data.foods) || data.foods.length === 0) data.foods = buildSeedFoods();
+if (!Array.isArray(data.proposals)) data.proposals = [];
+
 function save() {
   fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
 }
+save();
 
 export const store = {
   getUserByName(username) {
@@ -49,5 +55,33 @@ export const store = {
   },
   leaguesForUser(userId) {
     return data.leagues.filter((l) => l.memberIds?.includes(userId) || l.ownerId === userId);
+  },
+
+  // ---- editable food list -------------------------------------------------
+  getFoods() {
+    return data.foods;
+  },
+  getProposals() {
+    return data.proposals;
+  },
+  setProposals(ops) {
+    data.proposals = ops;
+    save();
+  },
+  addFood({ name, qty, type, tier }) {
+    const ord = data.foods.reduce((m, f) => Math.max(m, f.ord || 0), 0) + 1;
+    const f = { id: crypto.randomUUID(), ord, name, qty, type, tier };
+    data.foods.push(f);
+    save();
+    return f;
+  },
+  editFood(id, patch) {
+    const f = data.foods.find((x) => x.id === id);
+    if (f) { Object.assign(f, patch); save(); }
+    return f;
+  },
+  deleteFood(id) {
+    data.foods = data.foods.filter((x) => x.id !== id);
+    save();
   },
 };
