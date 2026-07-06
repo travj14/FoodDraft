@@ -5,7 +5,11 @@
   "scripts": {
     "server": "npm --prefix server run dev",
     "web": "npm --prefix web run dev",
-    "dev": "concurrently -n server,web -c cyan,magenta \"npm run server\" \"npm run web\""
+    "dev": "concurrently -n server,web -c cyan,magenta \"npm run server\" \"npm run web\"",
+    "build": "npm --prefix web install && npm --prefix web run build",
+    "start": "node server/src/index.js",
+    "deploy:start": "bash deploy/start.sh",
+    "deploy:restart": "bash deploy/restart.sh"
   },
   "devDependencies": {
     "concurrently": "^9.0.1"

@@ -1,6 +1,9 @@
 import express from 'express';
 import cors from 'cors';
 import http from 'http';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
@@ -8,12 +11,18 @@ import { Server } from 'socket.io';
 import { store } from './store.js';
 import { Room } from './draft.js';
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = process.env.PORT || 4100;
 const JWT_SECRET = process.env.JWT_SECRET || 'fooddraft-dev-secret-change-me';
+const WEB_DIST = path.join(__dirname, '..', '..', 'web', 'dist');
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+// In production, serve the built frontend from this same process.
+const hasBuild = fs.existsSync(path.join(WEB_DIST, 'index.html'));
+if (hasBuild) app.use(express.static(WEB_DIST));
 
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: '*' } });
@@ -205,5 +214,14 @@ io.on('connection', (socket) => {
     }
   });
 });
+
+// SPA fallback: any non-API GET returns index.html (socket.io is handled at the
+// HTTP-server level, so it never reaches Express).
+if (hasBuild) {
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api/')) return next();
+    res.sendFile(path.join(WEB_DIST, 'index.html'));
+  });
+}
 
 server.listen(PORT, () => console.log(`FoodDraft server on :${PORT}`));

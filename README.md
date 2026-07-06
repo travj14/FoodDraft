@@ -94,6 +94,19 @@ the real thing.
   and **overnight sleep-break** windows that freeze the clock.
 - **Customizable settings** — teams, rounds, pick clock, pool size, break window.
 
+## Deploying
+
+Runs as one Node process serving frontend + API + WebSocket, proxied by nginx to
+**both** `fooddraft.payrollgm.com` and `payrollgm.com/fooddraft` at once. Full guide in
+[`docs/deploy.md`](docs/deploy.md). On the server:
+
+```bash
+bash deploy/start.sh      # first time: install, build, systemd service, start on :4100
+bash deploy/restart.sh    # updates: git pull + rebuild + restart
+```
+
+Then point nginx at it ([`deploy/nginx.conf`](deploy/nginx.conf)) and add the DNS record.
+
 ## Contents
 
 - [`docs/food-pools.md`](docs/food-pools.md) — the tiered food lists (the master pools)

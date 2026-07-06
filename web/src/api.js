@@ -1,4 +1,11 @@
-const API = '/api';
+// When served under payrollgm.com/fooddraft, prefix API + socket paths with it.
+// At the domain root (fooddraft.payrollgm.com) BASE is ''.
+export const BASE = (() => {
+  if (typeof window === 'undefined') return '';
+  return /^\/fooddraft(?=\/|$)/.test(window.location.pathname) ? '/fooddraft' : '';
+})();
+
+const API = BASE + '/api';
 
 export function getToken() {
   return localStorage.getItem('fd_token');

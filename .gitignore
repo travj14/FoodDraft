@@ -1,5 +1,6 @@
 node_modules/
 dist/
 server/data.json
+deploy/fooddraft.env
 *.log
 .DS_Store
