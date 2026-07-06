@@ -3,29 +3,33 @@
 ## Draft format
 
 - **Snake draft**, **7 rounds** by default, for **10 teams** (both configurable).
-- **Round N draws only from Tier N's pool.** No cross-round picking.
-- Everyone drafts **one item per round**, so each player ends with a **unique
-  7-food lineup**.
+- **One flat food pool — every food is available on every pick.** There is no
+  round-by-round tier gating; you can draft any remaining food at any time.
+- Everyone drafts **one food per pick**, ending with a **unique lineup**.
 - Once a food is taken, it's gone — nobody else can draft it.
 
 ### Snake order
 
-Round 1 goes 1→N, Round 2 goes N→1, Round 3 goes 1→N, and so on. This keeps the
-early "warm-up tier" picks fair.
+Round 1 goes 1→N, Round 2 goes N→1, Round 3 goes 1→N, and so on.
 
-## Random board (on Start Draft)
+### Draft order (host-editable)
 
-The tier lists in [`food-pools.md`](food-pools.md) are **master pools**, not the board.
-When the host clicks **Start Draft**, the app builds *this* draft's board by randomly
-sampling from those pools:
+Before the draft, the **room owner can drag-and-drop the draft order** in the lobby.
+Empty slots are auto-filled with bots on start, keeping the owner's chosen positions.
 
-- The board holds **`teams × (rounds + 1)`** foods — enough to fill every pick, **plus
-  one extra round** of buffer so even the last drafter in a round still has a choice.
-  → 10 teams × (7 + 1) = **80 foods** (70 picked + 10 buffer).
-- Foods are drawn **one tier per round**: each round gets ~`teams + buffer` distinct
-  items randomly sampled from that round's master pool.
-- Because each pool holds far more items than a draft uses, **every draft is a unique
-  board.** Same league, same rules, brand-new set of horrors each year.
+## Random pool (on Start Draft)
+
+The tier lists in [`food-pools.md`](food-pools.md) are the **master list** the pool is
+drawn from. When the host clicks **Start Draft**, the app randomly samples a single
+flat pool from *all* foods across every tier:
+
+- The **host sets the pool size** (how many foods). Default is **auto** =
+  `teams × (rounds + 1)` — enough to fill every pick plus a round of cushion
+  (10 teams, 7 rounds → 80 foods). Minimum is `teams × rounds` so the draft can finish.
+- The pool is sampled from the **whole master list**, so it's naturally mostly-bad
+  (most master items are 🤢 content) and **different every draft.**
+- Tiers now only **organize/flavor** the master list and drive the 🍔/🤢 filter in the
+  food list — they no longer decide which round a food belongs to.
 
 Exact selection algorithm lives in [`build-notes.md`](build-notes.md).
 

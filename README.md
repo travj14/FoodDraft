@@ -55,10 +55,52 @@ A **small web page to run the live draft** with friends, each on their own devic
 picking in real time. See [`docs/build-notes.md`](docs/build-notes.md) for the
 planned approach.
 
+## Running the app
+
+Two dev servers — a Node/Socket.IO backend (`server/`, port **4100**) and a Vite +
+React frontend (`web/`, port **5173**).
+
+```bash
+# one-time
+npm install                 # root (concurrently)
+npm install --prefix server
+npm install --prefix web
+
+# run both at once
+npm run dev                 # backend :4100 + frontend :5173
+
+# or separately
+npm run server              # backend only
+npm run web                 # frontend only
+```
+
+Then open **http://localhost:5173**, create an account, and either **Start a mock
+draft** (drafts vs. bots immediately) or **Create a league**, share the code, and run
+the real thing.
+
+## What's built (MVP)
+
+- **Auth** — username/password (bcrypt + JWT).
+- **Lobby** — create a league (get a share code), join by code, or spin up a mock draft.
+- **Live draft room, Sleeper-styled** — colored snake board grid, on-the-clock
+  highlight, one **flat food pool** (all foods draftable every pick), searchable +
+  🍔/🤢 filterable list, **queue** (reorder/remove), roster + chat tabs, **auto-pick**
+  toggle.
+- **Editable draft order** — the owner **drag-and-drops** the draft order in the lobby
+  before starting; empty slots become bots in place.
+- **Draft engine** — snake order, one random pool sampled from the whole master list on
+  start (host-set pool size, default `teams × (rounds+1)`), per-pick timer, **bots
+  autofill empty seats**, auto-pick from your queue, owner **Start / Pause / Resume**,
+  and **overnight sleep-break** windows that freeze the clock.
+- **Customizable settings** — teams, rounds, pick clock, pool size, break window.
+
 ## Contents
 
-- [`docs/food-pools.md`](docs/food-pools.md) — the tiered food lists (the draft board)
+- [`docs/food-pools.md`](docs/food-pools.md) — the tiered food lists (the master pools)
 - [`docs/rules.md`](docs/rules.md) — draft format, portion sizes, and safety rules
-- [`docs/build-notes.md`](docs/build-notes.md) — how the app might be built
+- [`docs/build-notes.md`](docs/build-notes.md) — architecture & data model
+- `server/` — Node + Express + Socket.IO backend (draft engine, auth, rooms)
+- `web/` — React + Vite frontend (lobby + Sleeper-style draft room)
 
-> Status: **idea captured, nothing built yet.** Fresh repo.
+> Status: **MVP built and running.** Verified end-to-end: a full mock draft (humans +
+> bots, snake order, timers, completion) runs correctly.

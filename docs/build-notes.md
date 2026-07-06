@@ -31,31 +31,29 @@ This means we need a **backend / real-time sync layer**, not just a static page.
 5. **Show live state** — current pick, timer (optional), each player's lineup.
 6. **Export results** — final lineups so the last-place loser's meal is on record.
 
-## Start Draft: random board selection
+## Start Draft: random pool selection
 
-The tier lists are **master pools**; a draft uses only a random subset, so every draft
-is different.
+One flat pool, sampled from **all** foods across every tier. Every food is available on
+every pick (no round gating). A draft uses only a random subset, so every draft differs.
 
 ```
-buildBoard(teams, rounds, masterPools):
-  totalTarget = teams * (rounds + 1)        # e.g. 10 * 8 = 80
-  perRound    = distribute(totalTarget, rounds)   # even split, remainder to early rounds
-                                                  # 80 over 7 rounds -> [12,12,12,11,11,11,11]
-  board = {}
-  for r in 1..rounds:
-    pool = masterPools[tier r]
-    board[r] = sampleDistinct(pool, min(perRound[r], len(pool)))   # random, no repeats
-  return board
+buildPool(teams, rounds, poolSize, allFoods):
+  target = poolSize > 0 ? poolSize : teams * (rounds + 1)   # default auto = 80
+  n = min(len(allFoods), max(target, teams * rounds))       # enough to finish
+  return sampleDistinct(allFoods, n)                        # shuffle, take first n
 ```
 
-- `perRound` must be **≥ teams** for every round (so everyone can pick); the `+1 round`
-  of buffer guarantees a cushion above that.
-- `sampleDistinct` = shuffle the pool, take the first N. No item appears twice on the
-  board.
-- Because each pool (~28–31 items) is far larger than `perRound` (~11–12), the number
-  of possible boards is astronomical → **effectively unique every draft.**
-- Reroll option: let the host regenerate the board before the first pick if they want a
-  different set.
+- Picking pulls from this one flat pool; a taken food is removed for everyone.
+- Because the master list (~200 foods) far exceeds any pool, the sample is effectively
+  unique every draft, and mostly-bad (most master items are 🤢 content).
+
+## Draft order (host-editable, pre-draft)
+
+- `seatMap`: array of length `teams`, each slot a human `memberId` or `null`.
+- New joiners drop into the first open slot. The **owner drag-reorders** slots in the
+  lobby (`order:set` event) — validated to be exactly the current humans, same length.
+- On Start, each slot's human takes that seat; `null` slots become bots **in place**,
+  preserving the owner's chosen order.
 
 ## Possible tech approaches (decide later)
 
@@ -68,15 +66,16 @@ buildBoard(teams, rounds, masterPools):
 
 ## Data model sketch
 
-- `Draft`: id, teams, rounds, players[], currentRound, currentPickIndex,
-  snakeDirection, status
-- `Player`: id, name, lineup[] (one food per round)
-- `Pick`: draftId, round, playerId, foodName, timestamp
+- `Draft`: id, teams, rounds, seatMap[], members[], order[], currentOverall, status
+- `seatMap`: length `teams`, each slot = human `memberId` | `null` (host-orderable)
+- `Player`: id, name, lineup[] (their picks)
+- `Pick`: draftId, overall, round, pickInRound, seat, item
 - `FoodItem`: name, **quantity** (e.g. "4 McDonald's cheeseburgers"), **type**
-  (`volume` | `content`), taken flag. Rule: `content` items stay small-portioned;
+  (`volume` | `content`), tier, taken flag. Rule: `content` items stay small-portioned;
   only `volume` (edible) items get big quantities.
-- `MasterPools`: tier → full list of `FoodItem` (source, never mutated)
-- `Board`: round → the randomly-sampled `FoodItem`s for *this* draft (mark taken/removed)
+- `MasterList`: all `FoodItem`s across every tier (source, never mutated)
+- `Board`: one **flat** array — the randomly-sampled pool for *this* draft
+  (mark taken/removed). All of it is draftable on every pick.
 
 The UI should surface each item's **quantity and volume/content type** at pick time —
 that trade-off is the entire draft strategy, so it can't be hidden in a tooltip.

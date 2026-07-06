@@ -1,10 +1,11 @@
-# Food Pools (master pools)
+# Food Pools (master list)
 
-Seven tiers, one per round. These are **master pools**, not the draft board itself —
-when you click **Start Draft**, the app randomly samples from each tier to build that
-draft's board (see [Random selection](#random-selection-on-start-draft) below). The
-pools are intentionally **abundant** so every draft is a different subset and no two
-drafts are alike.
+Seven tiers of foods. **These organize the master list — they are no longer one tier
+per round.** On **Start Draft**, the app samples a single **flat pool** from *all* of
+these foods combined; every food in that pool is available on **every** pick (no
+round gating). The host sets how many foods the pool holds. Tiers still drive the
+🍔 volume / 🤢 content flavor and the food-list filter, and keep the master list
+mostly-bad. See [Random selection](#random-selection-on-start-draft) below.
 
 ## How to read this
 
@@ -19,18 +20,25 @@ The type tells you *why* it hurts:
 Rounds ramp up in overall misery, but the volume/content choice exists in every
 round. **Most items in every tier are bad.**
 
+Every entry is tuned to be a genuine punishment: edible/bland foods get real volume
+(a whole loaf of dry bread, not 3 slices), while truly gross foods stay small.
+
+> **Source of truth:** the live quantities the app uses live in
+> [`server/src/foods.js`](../server/src/foods.js). The tables below are illustrative
+> and may lag the latest tuning.
+
 ---
 
 ## Random selection (on Start Draft)
 
 - A draft is **`rounds` rounds** (default **7**) for **`teams` teams** (default **10**).
-- The board holds **`teams × (rounds + 1)`** foods — enough to fill every pick, *plus
-  one extra round* of buffer so even the last drafter in a round has a choice.
-  → 10 teams × 8 = **80 foods** for a standard draft.
-- Those 80 are drawn **one tier per round**: for each round, the app randomly samples
-  ~`teams + buffer` distinct items from that round's master pool.
-- Because each pool below holds far more items than any single draft uses, the sampled
-  board is **unique every time.**
+- The host sets the **pool size**. Default is **auto** = `teams × (rounds + 1)` — enough
+  to fill every pick plus a round of cushion (10 × 8 = **80 foods**). Minimum is
+  `teams × rounds` so the draft can finish.
+- The pool is one **flat, random sample of all foods below** (every tier combined).
+  **All of it is available on every pick** — no round gating.
+- Because the master list holds far more foods than any single draft uses, the sampled
+  pool is **unique every time.**
 
 See [`build-notes.md`](build-notes.md) for the exact algorithm.
 
