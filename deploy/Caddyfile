@@ -1,0 +1,26 @@
+# FoodDraft — Caddy config. The Node app runs on 127.0.0.1:4100.
+# Caddy auto-provisions HTTPS and proxies WebSockets automatically — no extra
+# directives needed for the live draft.
+
+# ── Option A: subdomain (easiest — same pattern as your other sites) ───────────
+#   Needs a DNS A record: fooddraft.payrollgm.com -> your server IP.
+fooddraft.payrollgm.com {
+    reverse_proxy 127.0.0.1:4100
+}
+
+# ── Option B: subpath — add these lines INSIDE your existing payrollgm.com block.
+#   `handle_path` strips the /fooddraft prefix before proxying, so the Node app
+#   (which lives at the root) doesn't need to know about the subpath.
+#
+# payrollgm.com {
+#     # ... your existing site config ...
+#
+#     redir /fooddraft /fooddraft/
+#     handle_path /fooddraft/* {
+#         reverse_proxy 127.0.0.1:4100
+#     }
+# }
+#
+#   Note: if your existing block uses bare directives (e.g. a site-wide
+#   `reverse_proxy` or `file_server` with no matcher), wrap that existing config
+#   in a `handle { ... }` block so the /fooddraft route takes precedence.

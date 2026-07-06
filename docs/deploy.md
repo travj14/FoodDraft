@@ -42,7 +42,32 @@ This installs deps, builds the frontend, generates `deploy/fooddraft.env` with a
 
 Change the port if 4100 is taken: `PORT=4200 bash deploy/start.sh`.
 
-## 3. Point nginx at it
+## 3. Point your web server at it
+
+### Using Caddy (see [`deploy/Caddyfile`](../deploy/Caddyfile))
+
+Caddy auto-handles HTTPS + WebSockets. Add to your Caddyfile (usually
+`/etc/caddy/Caddyfile`):
+
+```caddy
+# subdomain — needs DNS A record fooddraft.payrollgm.com -> server IP
+fooddraft.payrollgm.com {
+    reverse_proxy 127.0.0.1:4100
+}
+```
+
+For the subpath, add inside your existing `payrollgm.com { … }` block:
+
+```caddy
+    redir /fooddraft /fooddraft/
+    handle_path /fooddraft/* {
+        reverse_proxy 127.0.0.1:4100
+    }
+```
+
+Then `sudo systemctl reload caddy` (or `caddy reload`). Done — no cert step needed.
+
+### Using nginx
 
 Open [`deploy/nginx.conf`](../deploy/nginx.conf) — it has both pieces:
 
