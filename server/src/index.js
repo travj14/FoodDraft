@@ -46,6 +46,11 @@ function roomEmitter(code) {
   };
 }
 
+// Persist a completed league draft's results so they can be viewed later.
+function saveResult(code) {
+  return (result) => store.updateLeague(code, { result });
+}
+
 // Recreate a Room from a persisted league (e.g., after server restart).
 function getOrCreateRoom(code) {
   if (rooms.has(code)) return rooms.get(code);
@@ -53,8 +58,10 @@ function getOrCreateRoom(code) {
   if (!league) return null;
   const room = new Room({
     code, name: league.name, ownerId: league.ownerId, isMock: false,
-    settings: league.settings, emit: roomEmitter(code),
+    settings: league.settings, emit: roomEmitter(code), onDone: saveResult(code),
   });
+  // If this league's draft already finished, rehydrate its saved results.
+  if (league.result) room.loadResult(league.result);
   rooms.set(code, room);
   return room;
 }
@@ -114,7 +121,7 @@ app.post('/api/leagues', requireAuth, (req, res) => {
     memberIds: [req.user.id], settings: settings || {},
   };
   store.createLeague(league);
-  const room = new Room({ code, name: league.name, ownerId: req.user.id, isMock: false, settings: league.settings, emit: roomEmitter(code) });
+  const room = new Room({ code, name: league.name, ownerId: req.user.id, isMock: false, settings: league.settings, emit: roomEmitter(code), onDone: saveResult(code) });
   rooms.set(code, room);
   res.json({ code });
 });

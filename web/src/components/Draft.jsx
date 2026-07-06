@@ -327,7 +327,8 @@ function TopBar({ state, code, onLeave, isOwner, start, pause, resume, showSetti
             {remaining != null && <span className="timer">{fmt(remaining)}</span>}
           </span>
         )}
-        {status !== 'lobby' && <span className="muted small">Round {state.round + 1} / {state.settings.rounds}</span>}
+        {(status === 'active' || status === 'paused' || status === 'break') && <span className="muted small">Round {state.round + 1} / {state.settings.rounds}</span>}
+        {status === 'done' && state.completedAt && <span className="muted small">Completed {new Date(state.completedAt).toLocaleString()}</span>}
       </div>
       <div className="tb-right">
         {isOwner && status === 'lobby' && <button className="btn ghost sm" onClick={() => setShowSettings(true)}>⚙ Settings</button>}

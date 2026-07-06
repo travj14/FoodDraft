@@ -57,13 +57,15 @@ function breakEndAt(date, endHM) {
 }
 
 export class Room {
-  constructor({ code, name, ownerId, isMock, settings, emit }) {
+  constructor({ code, name, ownerId, isMock, settings, emit, onDone }) {
     this.code = code;
     this.name = name || (isMock ? 'Mock Draft' : 'FoodDraft League');
     this.ownerId = ownerId;
     this.isMock = !!isMock;
     this.settings = { ...DEFAULT_SETTINGS, ...(settings || {}) };
     this.emit = emit; // (state) => void
+    this.onDone = onDone; // (resultSnapshot) => void — persist completed non-mock drafts
+    this.completedAt = null;
     this.members = []; // {id, username, isBot, connected, seat}
     this.seatMap = Array(this.settings.teams).fill(null); // seat -> human memberId | null
     this.status = 'lobby'; // lobby | active | paused | break | done
@@ -224,7 +226,30 @@ export class Room {
     this.timer = null;
     this.deadline = null;
     this.status = 'done';
+    this.completedAt = this.completedAt || Date.now();
+    // Persist results for real leagues so they can be viewed later.
+    if (!this.isMock && typeof this.onDone === 'function') {
+      this.onDone({
+        completedAt: this.completedAt,
+        settings: this.settings,
+        members: this.members,
+        picks: this.picks,
+        order: this.order,
+      });
+    }
     this.emitState();
+  }
+
+  // Rehydrate a completed draft from a saved snapshot (e.g. after a server restart).
+  loadResult(r) {
+    this.status = 'done';
+    this.completedAt = r.completedAt || Date.now();
+    this.settings = { ...this.settings, ...(r.settings || {}) };
+    this.members = r.members || [];
+    this.picks = r.picks || [];
+    this.order = r.order || [];
+    this.currentOverall = this.order.length;
+    this.board = [];
   }
 
   // ---- the clock ----------------------------------------------------------
@@ -393,6 +418,7 @@ export class Room {
       currentMemberId: currentMember ? currentMember.id : null,
       round: this.status !== 'lobby' ? this.round() : 0,
       totalPicks: this.order.length,
+      completedAt: this.completedAt,
       deadline: this.deadline,
       serverNow: Date.now(),
       queues: this.queues,
