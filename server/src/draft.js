@@ -150,7 +150,8 @@ export class Room {
     // clamp
     this.settings.teams = Math.max(2, Math.min(16, this.settings.teams | 0));
     this.settings.rounds = Math.max(1, Math.min(20, this.settings.rounds | 0));
-    this.settings.pickSeconds = Math.max(10, Math.min(3600, this.settings.pickSeconds | 0));
+    // No real upper limit: 1 second → 100 days. (Timer is chunked so long clocks work.)
+    this.settings.pickSeconds = Math.max(1, Math.min(8640000, this.settings.pickSeconds | 0));
     this.settings.poolSize = Math.max(0, Math.min(500, this.settings.poolSize | 0));
     this.resizeSeatMap();
   }
@@ -227,6 +228,18 @@ export class Room {
   }
 
   // ---- the clock ----------------------------------------------------------
+  // setTimeout overflows past ~24.8 days (2^31 ms) and fires instantly. This
+  // chunks long delays so multi-hour (or multi-day) pick clocks work correctly.
+  armTimer(delayMs, cb) {
+    clearTimeout(this.timer);
+    const MAX = 2_000_000_000; // < 2^31 ms
+    const tick = (remaining) => {
+      if (remaining > MAX) this.timer = setTimeout(() => tick(remaining - MAX), MAX);
+      else this.timer = setTimeout(cb, Math.max(0, remaining));
+    };
+    tick(delayMs);
+  }
+
   scheduleNext() {
     clearTimeout(this.timer);
     this.timer = null;
@@ -238,12 +251,12 @@ export class Room {
       this.status = 'break';
       this.deadline = null;
       const resumeAt = breakEndAt(now, this.settings.breakEnd);
-      this.timer = setTimeout(() => {
+      this.armTimer(Math.max(1000, resumeAt - now), () => {
         if (this.status === 'break') {
           this.status = 'active';
           this.scheduleNext();
         }
-      }, Math.max(1000, resumeAt - now));
+      });
       this.emitState();
       return;
     }
@@ -256,7 +269,7 @@ export class Room {
       ? (member.isBot ? 1200 + Math.random() * 1600 : 800)
       : this.settings.pickSeconds * 1000;
     this.deadline = Date.now() + delayMs;
-    this.timer = setTimeout(() => this.autoPick(seat), delayMs);
+    this.armTimer(delayMs, () => this.autoPick(seat));
     this.emitState();
   }
 

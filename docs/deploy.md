@@ -56,16 +56,24 @@ fooddraft.payrollgm.com {
 }
 ```
 
-For the subpath, add inside your existing `payrollgm.com { … }` block:
+For the subpath, restructure your existing `payrollgm.com { … }` block so the
+`/fooddraft` route sits ahead of your other app in a mutually exclusive `handle`:
 
 ```caddy
-    redir /fooddraft /fooddraft/
+payrollgm.com {
     handle_path /fooddraft/* {
         reverse_proxy 127.0.0.1:4100
     }
+    handle {
+        # ... move ALL your existing payrollgm.com directives in here ...
+    }
+}
 ```
 
 Then `sudo systemctl reload caddy` (or `caddy reload`). Done — no cert step needed.
+(A bare `handle_path` without the wrapping `handle` fails when the block already has
+a site-wide directive that also matches `/fooddraft/*` — that's the usual "subdomain
+works but subpath 404s" cause.)
 
 ### Using nginx
 

@@ -12,7 +12,23 @@ const typeEmoji = (t) => (t === 'volume' ? '🍔' : '🤢');
 function fmt(ms) {
   if (ms == null || ms < 0) ms = 0;
   const s = Math.ceil(ms / 1000);
-  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+  const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
+  if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+  return `${m}:${String(sec).padStart(2, '0')}`;
+}
+
+// Human label for a clock length in seconds, e.g. "2 hr", "30 min", "45s".
+function fmtDuration(sec) {
+  if (sec % 3600 === 0) return `${sec / 3600} hr`;
+  if (sec % 60 === 0) return `${sec / 60} min`;
+  return `${sec}s`;
+}
+
+const DUR_UNITS = { seconds: 1, minutes: 60, hours: 3600 };
+function deriveDuration(sec) {
+  if (sec && sec % 3600 === 0) return { amt: sec / 3600, unit: 'hours' };
+  if (sec && sec % 60 === 0) return { amt: sec / 60, unit: 'minutes' };
+  return { amt: sec || 1, unit: 'seconds' };
 }
 
 export default function Draft({ code, me, onLeave }) {
@@ -330,7 +346,7 @@ function SettingsSummary({ settings, tierNames }) {
       <ul className="kv">
         <li><span>Teams</span><b>{settings.teams}</b></li>
         <li><span>Rounds</span><b>{settings.rounds}</b></li>
-        <li><span>Pick clock</span><b>{settings.pickSeconds}s</b></li>
+        <li><span>Pick clock</span><b>{fmtDuration(settings.pickSeconds)}</b></li>
         <li><span>Food pool size</span><b>{settings.poolSize > 0 ? settings.poolSize : `auto (${settings.teams * (settings.rounds + 1)})`}</b></li>
         <li><span>Sleep break</span><b>{settings.breakEnabled ? `${settings.breakStart}–${settings.breakEnd}` : 'off'}</b></li>
       </ul>
@@ -342,6 +358,13 @@ function SettingsSummary({ settings, tierNames }) {
 function SettingsModal({ settings, onClose, onSave }) {
   const [s, setS] = useState({ ...settings });
   const upd = (k, v) => setS((p) => ({ ...p, [k]: v }));
+  const initDur = deriveDuration(settings.pickSeconds);
+  const [pickAmt, setPickAmt] = useState(initDur.amt);
+  const [pickUnit, setPickUnit] = useState(initDur.unit);
+  const setPick = (amt, unit) => {
+    setPickAmt(amt); setPickUnit(unit);
+    upd('pickSeconds', Math.max(1, Math.round((Number(amt) || 0) * DUR_UNITS[unit])));
+  };
   return (
     <div className="modal-back" onClick={onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
@@ -349,7 +372,16 @@ function SettingsModal({ settings, onClose, onSave }) {
         <div className="form-grid">
           <label>Teams <input type="number" min="2" max="16" value={s.teams} onChange={(e) => upd('teams', +e.target.value)} /></label>
           <label>Rounds <input type="number" min="1" max="20" value={s.rounds} onChange={(e) => upd('rounds', +e.target.value)} /></label>
-          <label>Pick clock (seconds) <input type="number" min="10" max="3600" value={s.pickSeconds} onChange={(e) => upd('pickSeconds', +e.target.value)} /></label>
+          <label>Pick clock
+            <div className="dur-row">
+              <input type="number" min="1" value={pickAmt} onChange={(e) => setPick(e.target.value, pickUnit)} />
+              <select value={pickUnit} onChange={(e) => setPick(pickAmt, e.target.value)}>
+                <option value="seconds">seconds</option>
+                <option value="minutes">minutes</option>
+                <option value="hours">hours</option>
+              </select>
+            </div>
+          </label>
           <label>Food pool size <input type="number" min="0" max="500" value={s.poolSize} onChange={(e) => upd('poolSize', +e.target.value)} placeholder="0 = auto" /><span className="hint">0 = auto (draft + 1 round). All foods available every pick.</span></label>
         </div>
         <label className="chk big"><input type="checkbox" checked={s.breakEnabled} onChange={(e) => upd('breakEnabled', e.target.checked)} /> Overnight sleep break (freeze the clock)</label>

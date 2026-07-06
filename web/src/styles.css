@@ -181,7 +181,10 @@ input { font-family: inherit; }
 .modal h2 { margin-top: 0; }
 .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 12px 0; }
 .form-grid label { display: flex; flex-direction: column; gap: 5px; font-size: 13px; color: var(--muted); }
-.form-grid input { background: var(--bg2); border: 1px solid var(--line); color: var(--text); padding: 8px; border-radius: 7px; }
+.form-grid input, .form-grid select { background: var(--bg2); border: 1px solid var(--line); color: var(--text); padding: 8px; border-radius: 7px; }
+.dur-row { display: flex; gap: 6px; }
+.dur-row input { flex: 1; min-width: 0; }
+.dur-row select { flex: 0 0 auto; }
 .hint { font-size: 11px; }
 .chk.big { display: flex; align-items: center; gap: 8px; color: var(--text); margin: 8px 0; }
 .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }

@@ -8,19 +8,17 @@ fooddraft.payrollgm.com {
     reverse_proxy 127.0.0.1:4100
 }
 
-# ── Option B: subpath — add these lines INSIDE your existing payrollgm.com block.
-#   `handle_path` strips the /fooddraft prefix before proxying, so the Node app
-#   (which lives at the root) doesn't need to know about the subpath.
+# ── Option B: subpath — restructure your existing payrollgm.com block like this.
+#   `handle_path` strips the /fooddraft prefix before proxying. Using mutually
+#   exclusive `handle` blocks (/fooddraft first) guarantees it wins over any
+#   site-wide directive your other app uses.
 #
 # payrollgm.com {
-#     # ... your existing site config ...
-#
-#     redir /fooddraft /fooddraft/
 #     handle_path /fooddraft/* {
 #         reverse_proxy 127.0.0.1:4100
 #     }
-# }
 #
-#   Note: if your existing block uses bare directives (e.g. a site-wide
-#   `reverse_proxy` or `file_server` with no matcher), wrap that existing config
-#   in a `handle { ... }` block so the /fooddraft route takes precedence.
+#     handle {
+#         # ... move ALL your existing payrollgm.com directives in here ...
+#     }
+# }
