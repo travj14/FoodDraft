@@ -15,8 +15,31 @@ try {
   console.error('Failed to read data.json, starting fresh:', e.message);
 }
 
-// Seed the editable food list from the hardcoded tiers on first run.
-if (!Array.isArray(data.foods) || data.foods.length === 0) data.foods = buildSeedFoods();
+// Seed the editable food list from the tiers, and additively reconcile on every
+// startup: new seed items (by name) are added on deploy, but items already seeded
+// (and possibly deleted by an admin) are NOT resurrected.
+{
+  const seed = buildSeedFoods();
+  if (!Array.isArray(data.foods) || data.foods.length === 0) {
+    data.foods = seed;
+    data.seededNames = seed.map((f) => f.name);
+  } else {
+    const existing = new Set(data.foods.map((f) => f.name));
+    // Pre-migration data.json has no seededNames — treat current items as already
+    // seeded so we don't resurrect anything an admin removed before this existed.
+    const seen = new Set(Array.isArray(data.seededNames) ? data.seededNames : [...existing]);
+    let maxOrd = data.foods.reduce((m, f) => Math.max(m, f.ord || 0), 0);
+    for (const item of seed) {
+      if (seen.has(item.name)) continue;
+      seen.add(item.name);
+      if (!existing.has(item.name)) {
+        data.foods.push({ ...item, ord: ++maxOrd });
+        existing.add(item.name);
+      }
+    }
+    data.seededNames = [...seen];
+  }
+}
 if (!Array.isArray(data.proposals)) data.proposals = [];
 
 function save() {
